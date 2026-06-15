@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SplitMate 基礎變數與共用樣式 */
+:root {
+  --ink: #0E1117;
+  --ink2: #1A2030;
+  --coral: #F4623A;
+  --coral2: #FF8560;
+  --cream: #F7F4EE;
+  --slate: #8A94A6;
+  --green: #2DCE7E;
+  --amber: #EF9F27;
+  --white: #fff;
+  --card: rgba(255,255,255,.04);
+  --border: rgba(255,255,255,.08);
+}
+
+body {
+  background: var(--ink);
+  color: var(--white);
+  font-family: system-ui, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 隱藏/自訂卷軸 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 10px; }

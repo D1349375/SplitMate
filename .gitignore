@@ -1,0 +1,10 @@
+# 忽略前端與後端的套件庫
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# 忽略本地資料庫檔案 (避免把別人的帳本覆蓋掉)
+server/database/splitmate.sqlite
+
+# 忽略系統產生的垃圾檔
+.DS_Store
