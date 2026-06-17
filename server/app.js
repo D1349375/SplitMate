@@ -239,6 +239,16 @@ app.post('/api/subscriptions', (req, res) => {
   });
 });
 
+// 12. 刪除單筆帳目
+app.delete('/api/expenses/:id', (req, res) => {
+  const expId = req.params.id;
+  db.run('DELETE FROM expenses WHERE id = ?', [expId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    if (this.changes === 0) return res.status(404).json({ error: '找不到該筆帳目' });
+    res.json({ message: '帳目已成功刪除' });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 後端伺服器已啟動於 http://localhost:${PORT}`);
 });
