@@ -15,9 +15,10 @@
     <div class="flex gap-4 mb-8 overflow-x-auto pb-4 scrollbar-hide">
       
       <div v-for="bal in balances" :key="bal.person" class="flex flex-col items-center gap-2 shrink-0 bg-[rgba(255,255,255,.04)] p-4 border border-[rgba(255,255,255,.08)] rounded-2xl min-w-[100px]">
-        <div class="w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg transition-colors"
-             :class="bal.amount >= 0 ? 'bg-[rgba(45,206,126,.12)] text-[#2DCE7E]' : 'bg-[rgba(244,98,58,.15)] text-[#F4623A]'">
-          {{ bal.person.charAt(0) }}
+        <div class="w-12 h-12 rounded-full flex items-center justify-center font-semibold text-xl transition-colors overflow-hidden border"
+             :class="bal.amount >= 0 ? 'bg-[rgba(45,206,126,.12)] text-[#2DCE7E] border-[#2DCE7E]/30' : 'bg-[rgba(244,98,58,.15)] text-[#F4623A] border-[#F4623A]/30'">
+          <img v-if="isImage(getAvatar(bal.person))" :src="getAvatar(bal.person)" class="w-full h-full object-cover" />
+          <span v-else>{{ getAvatar(bal.person) }}</span>
         </div>
         <div class="text-base font-semibold" :class="bal.amount >= 0 ? 'text-[#2DCE7E]' : 'text-[#F4623A]'">
           {{ bal.amount > 0 ? '+' : '' }}{{ bal.amount }}
@@ -34,15 +35,25 @@
     </div>
 
     <div v-for="(t, index) in transfers" :key="index" class="flex items-center gap-4 p-5 bg-gradient-to-r from-[rgba(45,206,126,.08)] to-transparent border border-[rgba(45,206,126,.2)] rounded-2xl mb-3">
+      
       <div class="flex items-center gap-2 text-[15px] font-medium">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold bg-[rgba(45,206,126,.12)] text-[#2DCE7E] text-xs">{{ t.from.charAt(0) }}</div>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-semibold bg-[rgba(45,206,126,.12)] text-[#2DCE7E] text-base overflow-hidden border border-[#2DCE7E]/30">
+          <img v-if="isImage(getAvatar(t.from))" :src="getAvatar(t.from)" class="w-full h-full object-cover" />
+          <span v-else>{{ getAvatar(t.from) }}</span>
+        </div>
         {{ t.from }}
       </div>
+
       <div class="text-[#8A94A6] text-xl flex-1 text-center">→</div>
+      
       <div class="flex items-center gap-2 text-[15px] font-medium">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center font-semibold bg-[rgba(244,98,58,.15)] text-[#F4623A] text-xs">{{ t.to.charAt(0) }}</div>
+        <div class="w-9 h-9 rounded-full flex items-center justify-center font-semibold bg-[rgba(244,98,58,.15)] text-[#F4623A] text-base overflow-hidden border border-[#F4623A]/30">
+          <img v-if="isImage(getAvatar(t.to))" :src="getAvatar(t.to)" class="w-full h-full object-cover" />
+          <span v-else>{{ getAvatar(t.to) }}</span>
+        </div>
         {{ t.to }}
       </div>
+
       <div class="flex-1"></div>
       <div class="text-lg font-semibold text-[#F4623A]">NT$ {{ t.amount }}</div>
       <div class="w-12 h-12 grid grid-cols-5 gap-[1px] shrink-0 bg-white p-[2px] rounded-md" v-html="generateQR()"></div>
@@ -70,9 +81,14 @@ const groupData = ref(null)
 const balances = ref([])
 const transfers = ref([])
 
+// 🚀 頭像解析邏輯 (讀取全域暫存)
+const globalAvatars = ref(JSON.parse(localStorage.getItem('splitmate_global_avatars') || '{}'))
+const isImage = (str) => str && str.startsWith('data:image')
+const getAvatar = (name) => globalAvatars.value[name] || name.charAt(0).toUpperCase()
+
 const fetchGroupDetails = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/groups/${groupId}`)
+    const res = await fetch(`http://192.168.94.65:3000/api/groups/${groupId}`)
     groupData.value = await res.json()
   } catch (error) {
     console.error('無法取得群組資料', error)
@@ -81,7 +97,7 @@ const fetchGroupDetails = async () => {
 
 const fetchSettleData = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/groups/${groupId}/settle`)
+    const res = await fetch(`http://192.168.94.65:3000/api/groups/${groupId}/settle`)
     const data = await res.json()
     balances.value = data.balances
     transfers.value = data.transfers

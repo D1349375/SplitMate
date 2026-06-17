@@ -225,15 +225,15 @@ app.get('/api/subscriptions', (req, res) => {
   });
 });
 
-// 10. 新增訂閱
+// 10. 新增訂閱 (加入 paid_by)
 app.post('/api/subscriptions', (req, res) => {
-  const { name, amount, billing_day, group_id } = req.body;
-  if (!name || !amount || !billing_day || !group_id) {
-    return res.status(400).json({ error: '請填寫完整的訂閱資訊' });
+  const { name, amount, billing_day, group_id, paid_by } = req.body;
+  if (!name || !amount || !billing_day || !group_id || !paid_by) {
+    return res.status(400).json({ error: '請填寫完整的訂閱資訊（包含付款人）' });
   }
 
-  const sql = 'INSERT INTO subscriptions (group_id, name, amount, billing_day) VALUES (?, ?, ?, ?)';
-  db.run(sql, [group_id, name, amount, billing_day], function(err) {
+  const sql = 'INSERT INTO subscriptions (group_id, name, amount, billing_day, paid_by) VALUES (?, ?, ?, ?, ?)';
+  db.run(sql, [group_id, name, amount, billing_day, paid_by], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, message: '訂閱排程建立成功' });
   });
@@ -241,4 +241,19 @@ app.post('/api/subscriptions', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 後端伺服器已啟動於 http://localhost:${PORT}`);
+});
+
+// 11. 刪除群組與其所有關聯資料
+app.delete('/api/groups/:id', (req, res) => {
+  const groupId = req.params.id;
+  // 使用 db.serialize 確保照順序刪除
+  db.serialize(() => {
+    db.run('DELETE FROM expenses WHERE group_id = ?', [groupId]);
+    db.run('DELETE FROM members WHERE group_id = ?', [groupId]);
+    db.run('DELETE FROM subscriptions WHERE group_id = ?', [groupId]);
+    db.run('DELETE FROM groups WHERE id = ?', [groupId], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: '群組已成功刪除' });
+    });
+  });
 });

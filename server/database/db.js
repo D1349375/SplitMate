@@ -33,7 +33,8 @@ db.serialize(() => {
     group_id INTEGER,
     name TEXT NOT NULL,
     amount REAL NOT NULL,
-    billing_day INTEGER NOT NULL
+    billing_day INTEGER NOT NULL,
+    paid_by TEXT NOT NULL DEFAULT '訪客'
   )`);
 
   // 新增成員表：記錄每個群組的成員名單

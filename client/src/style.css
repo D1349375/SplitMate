@@ -28,3 +28,15 @@ body {
 /* 隱藏/自訂卷軸 */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 10px; }
+
+/* 修正 iPhone 瀏海與底部安全區域 */
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+/* 防止 iOS Safari 橡皮筋滾動效果影響整體版面 */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}

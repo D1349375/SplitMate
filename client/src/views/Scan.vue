@@ -137,7 +137,7 @@ const triggerToast = (msg) => {
 
 const fetchGroupDetails = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/groups/${groupId.value}`)
+    const res = await fetch(`http://192.168.94.65:3000/api/groups/${groupId.value}`)
     if (res.ok) groupData.value = await res.json()
   } catch (error) {
     console.error(error)
@@ -169,7 +169,7 @@ const submitClaimToDatabase = async () => {
   const currentUser = localStorage.getItem('splitmate_username') || '小明'
 
   try {
-    const res = await fetch(`http://localhost:3000/api/groups/${groupId.value}/expenses`, {
+    const res = await fetch(`http://192.168.94.65:3000/api/groups/${groupId.value}/expenses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

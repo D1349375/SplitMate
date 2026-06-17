@@ -63,12 +63,22 @@
               </div>
             </div>
 
-            <div class="mb-6">
+            <div class="mb-4">
               <label class="text-xs text-[#8A94A6] tracking-widest uppercase block mb-2">歸屬群組</label>
               <select v-model="newSub.group_id" class="w-full bg-[#0E1117] border border-[rgba(255,255,255,.05)] rounded-xl px-4 py-3 text-[#F7F4EE] outline-none focus:border-[rgba(244,98,58,.5)] transition-all text-sm appearance-none">
                 <option value="" disabled>請選擇要自動記帳的群組...</option>
                 <option v-for="g in groups" :key="g.id" :value="g.id" class="bg-[#1A2030] text-white">
                   {{ g.emoji }} {{ g.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-6" v-if="newSub.group_id">
+              <label class="text-xs text-[#8A94A6] tracking-widest uppercase block mb-2">預設付款人 (刷誰的卡)</label>
+              <select v-model="newSub.paid_by" class="w-full bg-[#0E1117] border border-[rgba(255,255,255,.05)] rounded-xl px-4 py-3 text-[#F7F4EE] outline-none focus:border-[rgba(244,98,58,.5)] transition-all text-sm appearance-none">
+                <option value="" disabled>請選擇是誰代墊的...</option>
+                <option v-for="member in groupMembers" :key="member" :value="member" class="bg-[#1A2030] text-white">
+                  {{ member }}
                 </option>
               </select>
             </div>
@@ -91,8 +101,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
-
+import { ref, onMounted, nextTick, watch } from 'vue'
+const groupMembers = ref([])
 const subscriptions = ref([])
 const groups = ref([])
 
@@ -105,12 +115,13 @@ const newSub = ref({
   name: '',
   amount: '',
   billing_day: '',
-  group_id: ''
+  group_id: '',
+  paid_by: ''
 })
 
 const fetchSubscriptions = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/subscriptions')
+    const res = await fetch('http://192.168.94.65:3000/api/subscriptions')
     subscriptions.value = await res.json()
   } catch (error) {
     console.error('無法取得訂閱資料:', error)
@@ -119,7 +130,7 @@ const fetchSubscriptions = async () => {
 
 const fetchGroups = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/groups')
+    const res = await fetch('http://192.168.94.65:3000/api/groups')
     groups.value = await res.json()
   } catch (error) {
     console.error('無法取得群組資料:', error)
@@ -139,8 +150,39 @@ const closeModal = () => {
   showModal.value = false
 }
 
+// 🚀 監聽群組 ID，一有變化就去撈取成員
+watch(() => newSub.value.group_id, async (newVal) => {
+  if (!newVal) {
+    groupMembers.value = []
+    return
+  }
+  
+  try {
+    const res = await fetch(`http://192.168.94.65:3000/api/groups/${newVal}/members`)
+    const data = await res.json()
+    groupMembers.value = data.map(m => m.name)
+    
+    // 取得目前操作者的名字
+    const myName = localStorage.getItem('splitmate_username') || '訪客'
+    
+    // 💡 關鍵修復：如果是剛創立、還沒人進去的空群組，強制把「目前操作者」加進名單避免選單空白
+    if (groupMembers.value.length === 0) {
+      groupMembers.value.push(myName)
+    }
+    
+    // 自動預設選中自己，或是名單上的第一個人
+    if (groupMembers.value.includes(myName)) {
+      newSub.value.paid_by = myName
+    } else {
+      newSub.value.paid_by = groupMembers.value[0]
+    }
+  } catch (e) {
+    console.error('無法取得成員名單', e)
+  }
+})
+
 const submitSub = async () => {
-  if (!newSub.value.name || !newSub.value.amount || !newSub.value.billing_day || !newSub.value.group_id) {
+  if (!newSub.value.name || !newSub.value.amount || !newSub.value.billing_day || !newSub.value.group_id || !newSub.value.paid_by) {
     errorMsg.value = '請填寫所有欄位'
     return
   }
@@ -149,7 +191,7 @@ const submitSub = async () => {
   errorMsg.value = ''
 
   try {
-    const res = await fetch('http://localhost:3000/api/subscriptions', {
+    const res = await fetch('http://192.168.94.65:3000/api/subscriptions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newSub.value)
@@ -157,7 +199,9 @@ const submitSub = async () => {
 
     if (res.ok) {
       await fetchSubscriptions()
-      closeModal()
+      showModal.value = false // 👈 強制關閉視窗
+      // 👈 清空整個表單，準備迎接下一次新增
+      newSub.value = { name: '', amount: '', billing_day: '', group_id: '', paid_by: '' }
     } else {
       const err = await res.json()
       errorMsg.value = '建立失敗：' + err.error
@@ -201,6 +245,7 @@ onMounted(() => {
   fetchGroups()
   fetchSubscriptions()
 })
+
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-[100dvh] w-full bg-[#0E1117] text-white overflow-hidden font-sans">
     
-    <aside class="hidden md:flex w-[260px] flex-col border-r border-[rgba(255,255,255,.08)] bg-[rgba(14,17,23,.95)] p-6 shrink-0">
+    <aside v-if="!isFullScreenPage" class="hidden md:flex w-[260px] flex-col border-r border-[rgba(255,255,255,.08)] bg-[rgba(14,17,23,.95)] p-6 shrink-0">
       <div class="text-2xl font-bold text-white mb-10 px-4 tracking-tight">
         Split<span class="text-[#F4623A]">Mate</span>
       </div>
@@ -25,8 +25,9 @@
       </nav>
     </aside>
 
-    <main class="flex-1 overflow-y-auto relative pb-[90px] md:pb-0 scrollbar-hide">
-      <div class="max-w-[800px] mx-auto w-full p-4 md:p-10">
+    <main class="flex-1 overflow-y-auto relative scrollbar-hide"
+      :style="!isFullScreenPage ? 'padding-bottom: max(90px, calc(72px + env(safe-area-inset-bottom)));' : ''">
+      <div :class="!isFullScreenPage ? 'max-w-[800px] mx-auto w-full px-4 pt-4 pb-2 md:p-10' : 'w-full h-full'">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -35,7 +36,8 @@
       </div>
     </main>
 
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 h-[72px] bg-[rgba(14,17,23,.95)] backdrop-blur-md border-t border-[rgba(255,255,255,.08)] flex items-center justify-around px-2 pb-2 z-50">
+    <nav v-if="!isFullScreenPage" class="md:hidden fixed bottom-0 left-0 right-0 bg-[rgba(14,17,23,.95)] backdrop-blur-md border-t border-[rgba(255,255,255,.08)] flex items-center justify-around px-2 z-50"
+     style="padding-bottom: max(8px, env(safe-area-inset-bottom));">
       
       <router-link to="/" class="bnav-item" active-class="active">
         <div class="bnav-icon">🏠</div>
@@ -68,9 +70,16 @@
 
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
+import { computed } from 'vue' // 🚀 引入 computed，移除 watch
 
 const route = useRoute()
 const router = useRouter()
+
+// 🚀 核心判斷：是否為全螢幕頁面 (登入或初次設定)
+// 只要網址是 /login 或 /setup，就會回傳 true，並自動隱藏所有導覽列！
+const isFullScreenPage = computed(() => {
+  return ['/login', '/setup'].includes(route.path)
+})
 
 // 點擊群組按鈕時的導航邏輯：記住上次進去的群組
 const goToLastGroup = () => {
@@ -117,7 +126,10 @@ body {
   @apply bg-[#F4623A]/10;
 }
 .bnav-icon {
-  @apply text-[20px] leading-none mb-1 text-white;
+  @apply text-[20px] leading-none mb-1 text-[#8A94A6] transition-colors duration-200;
+}
+.bnav-item.active .bnav-icon {
+  @apply text-[#F4623A];
 }
 .bnav-label {
   @apply text-[9px] text-[#8A94A6] transition-colors duration-200 font-medium;

@@ -1,10 +1,19 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+
+    <!-- ✅ 這行是關鍵，缺少或不完整都會讓手機跑版 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- PWA 相關：讓手機加到主畫面時隱藏瀏覽器 UI -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0E1117" />
+
+    <title>SplitMate</title>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   </head>
   <body>
     <div id="app"></div>

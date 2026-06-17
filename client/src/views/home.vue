@@ -1,8 +1,8 @@
 <template>
   <div class="page-home">
 
-    <div class="bg-[rgba(255,255,255,.04)] border border-[rgba(255,255,255,.08)] rounded-2xl p-10 text-center mb-6">
-      <div class="text-[56px] font-semibold tracking-tighter transition-colors duration-200" 
+    <div class="bg-[rgba(255,255,255,.04)] border border-[rgba(255,255,255,.08)] rounded-2xl py-5 px-4 text-center mb-3">
+      <div class="text-[36px] font-semibold tracking-tighter transition-colors duration-200" 
            :class="myTotalBalance >= 0 ? 'text-[#2DCE7E]' : 'text-[#F4623A]'">
         NT$ {{ Math.abs(myTotalBalance) }}
       </div>
@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <div class="bg-gradient-to-br from-[rgba(244,98,58,.08)] to-[rgba(244,98,58,.02)] border border-[rgba(244,98,58,.2)] rounded-xl p-5 mb-6">
+    <div class="bg-gradient-to-br from-[rgba(244,98,58,.08)] to-[rgba(244,98,58,.02)] border border-[rgba(244,98,58,.2)] rounded-xl p-3 mb-3">
       <div class="flex items-center justify-between mb-4">
         <div class="text-[13px] text-[#FF8560] tracking-wider font-medium">⚡ 即將到期訂閱</div>
         <router-link to="/subs" class="text-xs text-[#8A94A6] hover:text-[#F7F4EE] transition-colors">查看全部 &rarr;</router-link>
@@ -21,7 +21,7 @@
         目前沒有進行中的訂閱排程
       </div>
 
-      <div v-for="sub in topSubscriptions" :key="sub.id" class="flex items-center gap-3 mb-3 last:mb-0">
+      <div v-for="sub in topSubscriptions" :key="sub.id" class="flex items-center gap-3 mb-2 last:mb-0">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 text-white" :style="{ backgroundColor: getBrandColor(sub.name) }">
           {{ sub.name.charAt(0).toUpperCase() }}
         </div>
@@ -36,22 +36,15 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between text-xs text-[#8A94A6] tracking-widest mt-6 mb-3 uppercase">
-        <span>我的群組</span>
-        <button
-            @click="openModal"
-            class="bg-[#F4623A] text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#FF8560] shadow-sm transition-all cursor-pointer tracking-normal">
-            ＋ 新增群組
-        </button>
-    </div>
+    <div class="text-xs text-[#8A94A6] tracking-widest mt-4 mb-3 uppercase">我的群組</div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <router-link
         v-for="group in groups"
         :key="group.id"
         :to="`/group/${group.id}`"
-        class="flex items-center gap-4 bg-[rgba(255,255,255,.04)] border border-[rgba(255,255,255,.08)] rounded-2xl p-5 cursor-pointer transition-all hover:border-[rgba(244,98,58,.4)] hover:-translate-y-0.5 hover:shadow-lg">
-        <div class="w-14 h-14 rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[rgba(244,98,58,.1)]">
+        class="flex items-center gap-3 bg-[rgba(255,255,255,.04)] border border-[rgba(255,255,255,.08)] rounded-2xl p-4 cursor-pointer transition-all hover:border-[rgba(244,98,58,.4)] hover:-translate-y-0.5 hover:shadow-lg">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0 bg-[rgba(244,98,58,.1)]">
           {{ group.emoji || '🏠' }}
         </div>
         <div class="flex-1">
@@ -68,6 +61,12 @@
         目前還沒有任何群組，點擊右上方「＋ 新增」建立一個吧！
       </div>
     </div>
+    <!-- 群組列表結束後 -->
+    <button @click="openModal"
+    class="w-full mt-3 py-3.5 bg-[#F4623A] text-white rounded-2xl text-sm font-medium hover:bg-[#FF8560] transition-all">
+    ＋ 新增群組
+    </button>
+
 
     <Teleport to="body">
       <Transition name="modal">
@@ -104,6 +103,27 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const userName = ref('載入中...')
+const userAvatar = ref('👤')
+
+const logout = () => {
+  localStorage.removeItem('splitmate_username')
+  localStorage.removeItem('splitmate_avatar')
+  localStorage.removeItem('splitmate_setup_done')
+  router.push('/login')
+}
+
+onMounted(() => {
+  // 檢查登入
+  const name = localStorage.getItem('splitmate_username')
+  if (!name) { router.push('/login'); return }
+
+  fetchGroups()
+  fetchSubscriptions()
+})
 
 // ==========================================
 // 1. 狀態變數與設定
@@ -132,7 +152,7 @@ const emojiOptions = [
 // ==========================================
 const fetchGroups = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/groups')
+    const res = await fetch('http://192.168.94.65:3000/api/groups')
     const data = await res.json()
     groups.value = data
     
@@ -144,7 +164,7 @@ const fetchGroups = async () => {
     // 併發向後端各個群組調用 /settle 演算法，將個人淨值加總
     await Promise.all(data.map(async (g) => {
       try {
-        const sRes = await fetch(`http://localhost:3000/api/groups/${g.id}/settle`)
+        const sRes = await fetch(`http://192.168.94.65:3000/api/groups/${g.id}/settle`)
         const sData = await sRes.json()
         // 在結算結果中尋找我的名字
         const myBalObj = sData.balances?.find(b => b.person === myName)
@@ -197,16 +217,24 @@ const submitGroup = async () => {
   isLoading.value = true; errorMsg.value = ''
 
   try {
-    const res = await fetch('http://localhost:3000/api/groups', {
+    const res = await fetch('http://192.168.94.65:3000/api/groups', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, emoji: selectedEmoji.value })
     })
-    if (res.ok) { await fetchGroups(); closeModal() } 
-    else { const err = await res.json(); errorMsg.value = '伺服器錯誤：' + err.error }
+    
+    if (res.ok) { 
+      await fetchGroups()
+      showModal.value = false // 👈 強制關閉視窗
+      newGroupName.value = '' // 👈 清空輸入框
+    } else { 
+      const err = await res.json(); errorMsg.value = '伺服器錯誤：' + err.error 
+    }
   } catch (e) {
     errorMsg.value = '⚠️ 無法連線到後端伺服器，請確認 server 是否已啟動'
-  } finally { isLoading.value = false }
+  } finally { 
+    isLoading.value = false 
+  }
 }
 
 // ==========================================
@@ -216,7 +244,7 @@ const subscriptions = ref([])
 
 const fetchSubscriptions = async () => {
   try {
-    const res = await fetch('http://localhost:3000/api/subscriptions')
+    const res = await fetch('http://192.168.94.65:3000/api/subscriptions')
     subscriptions.value = await res.json()
   } catch (error) {
     console.error('無法連線至後端取得訂閱:', error)
